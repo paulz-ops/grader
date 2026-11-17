@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, halfForDate, today } from '../db';
 import { computeTable, gradeKey, inPeriod, mean } from '../calc';
-import { formatAverage, formatGrade, roundReport, GRADE_SYSTEMS } from '../grades';
+import { effectiveStep, formatAverage, formatReport, roundReport, GRADE_SYSTEMS } from '../grades';
 import { createAssessment, setGrade } from '../actions';
 import { sortStudents } from '../students';
 import { formatNumber, formatShortDate } from '../format';
@@ -70,11 +70,12 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
 
   const report =
     period === 'year'
-      ? { label: 'Zeugnis', title: 'Jahreszeugnis (gerundet)', threshold: cls.roundingFinal }
+      ? { label: 'Zeugnis', title: 'Jahreszeugnis (gerundet)', threshold: cls.roundingFinal, step: cls.reportStepFinal }
       : period === 1 && cls.halfYearReport
-        ? { label: 'HJ-Zeugnis', title: 'Halbjahreszeugnis (gerundet)', threshold: cls.roundingHalf }
+        ? { label: 'HJ-Zeugnis', title: 'Halbjahreszeugnis (gerundet)', threshold: cls.roundingHalf, step: cls.reportStepHalf }
         : null;
-  const reportOf = (avg: number | null) => (avg === null || !report ? null : roundReport(avg, system, report.threshold));
+  const reportOf = (avg: number | null) =>
+    avg === null || !report ? null : roundReport(avg, system, report.threshold, effectiveStep(system, report.step));
 
   const add = async (categoryId: string) => {
     const half = period === 'year' ? halfForDate(today(), schoolYear) : period;
@@ -196,7 +197,7 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
                   </td>
                   {report && (
                     <td className={r.provisional ? 'report provisional' : 'report'}>
-                      {rep !== null ? formatGrade(rep, system) : ''}
+                      {rep !== null ? formatReport(rep, system) : ''}
                     </td>
                   )}
                 </tr>

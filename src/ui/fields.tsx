@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { describeRounding } from '../grades';
 import { parseNumber } from '../format';
-import type { GradeSystem } from '../types';
+import type { GradeSystem, ReportStep } from '../types';
 
 interface TextFieldProps {
   value: string;
@@ -51,11 +51,12 @@ interface RoundingFieldProps {
   label: string;
   value: number;
   system: GradeSystem;
+  step: ReportStep;
   onSave: (value: number) => void;
 }
 
 /** Auswahl der Rundungsregel mit Beispiel. */
-export function RoundingField({ label, value, system, onSave }: RoundingFieldProps) {
+export function RoundingField({ label, value, system, step, onSave }: RoundingFieldProps) {
   const isPreset = value === 0.5 || value === 0.51;
   const [custom, setCustom] = useState(!isPreset);
   useEffect(() => {
@@ -64,7 +65,7 @@ export function RoundingField({ label, value, system, onSave }: RoundingFieldPro
   const mode = custom ? 'custom' : String(value);
 
   return (
-    <Field label={label} hint={describeRounding(value, system)}>
+    <Field label={label} hint={describeRounding(value, system, step)}>
       <select
         value={mode}
         onChange={(e) => {
@@ -76,8 +77,8 @@ export function RoundingField({ label, value, system, onSave }: RoundingFieldPro
           }
         }}
       >
-        <option value="0.5">Kaufmännisch (ab x,50 aufrunden)</option>
-        <option value="0.51">Erst ab x,51 aufrunden</option>
+        <option value="0.5">Kaufmännisch (genau auf der Mitte → schlechtere Stufe)</option>
+        <option value="0.51">Genau auf der Mitte → bessere Stufe</option>
         <option value="custom">Eigene Grenze …</option>
       </select>
       {mode === 'custom' && (

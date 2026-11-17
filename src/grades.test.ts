@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeRounding, formatAverage, formatGrade, parseGrade, roundReport } from './grades';
+import { describeRounding, formatAverage, formatGrade, formatReport, parseGrade, roundReport } from './grades';
 
 const val = (value: number) => ({ kind: 'value', value });
 
@@ -86,5 +86,34 @@ describe('roundReport', () => {
   it('beschreibt die Rundung mit Beispiel', () => {
     expect(describeRounding(0.5, 'tendency')).toBe('2,49 → 2 · 2,50 → 3');
     expect(describeRounding(0.51, 'points')).toBe('10,50 → 10 · 10,51 → 11');
+    expect(describeRounding(0.5, 'tendency', 0.5)).toBe('2,24 → 2 · 2,25 → 2-3');
+    expect(describeRounding(0.5, 'tendency', 0.25)).toBe('2,12 → 2 · 2,13 → 2-');
+  });
+});
+
+describe('Zeugnisnoten in halben Noten und mit Tendenz', () => {
+  it('halbe Noten: x,25 und x,75 sind die Grenzen', () => {
+    expect(roundReport(2.24, 'tendency', 0.5, 0.5)).toBe(2);
+    expect(roundReport(2.25, 'tendency', 0.5, 0.5)).toBe(2.5);
+    expect(roundReport(2.74, 'tendency', 0.5, 0.5)).toBe(2.5);
+    expect(roundReport(2.75, 'tendency', 0.5, 0.5)).toBe(3);
+  });
+  it('mit Tendenz: Viertelschritte', () => {
+    expect(roundReport(1.8, 'tendency', 0.5, 0.25)).toBe(1.75);
+    expect(roundReport(2.4, 'tendency', 0.5, 0.25)).toBe(2.5);
+    expect(roundReport(2.62, 'tendency', 0.5, 0.25)).toBe(2.5);
+    expect(roundReport(2.63, 'tendency', 0.5, 0.25)).toBe(2.75);
+  });
+  it('Punkte bleiben im Zeugnis ganzzahlig', () => {
+    expect(roundReport(10.3, 'points', 0.5, 0.5)).toBe(10);
+  });
+  it('formatReport zeigt 2-3, 2+, 2-', () => {
+    expect(formatReport(2, 'tendency')).toBe('2');
+    expect(formatReport(2.5, 'tendency')).toBe('2-3');
+    expect(formatReport(1.75, 'tendency')).toBe('2+');
+    expect(formatReport(2.25, 'tendency')).toBe('2-');
+    expect(formatReport(5.75, 'tendency')).toBe('6+');
+    expect(formatReport(2.5, 'decimal')).toBe('2,5');
+    expect(formatReport(11, 'points')).toBe('11');
   });
 });

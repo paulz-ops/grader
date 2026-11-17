@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, newId } from '../db';
 import { addStudents, addSubject, deleteClass, deleteStudent, deleteSubject } from '../actions';
-import { GRADE_SYSTEMS } from '../grades';
+import { effectiveStep, GRADE_SYSTEMS, REPORT_STEPS } from '../grades';
 import { SCHOOL_TYPES } from '../templates';
 import { parseStudentLines, sortStudents } from '../students';
 import { parseNumber, formatNumber } from '../format';
 import { Field, RoundingField, TextField } from './fields';
 import { PhotoButton } from './photo';
-import type { Assessment, GradeSystem, SchoolClass, SchoolType, Student, Subject } from '../types';
+import type { Assessment, GradeSystem, ReportStep, SchoolClass, SchoolType, Student, Subject } from '../types';
 
 export function ClassSettings({ cls }: { cls: SchoolClass }) {
   const data = useLiveQuery(async () => {
@@ -88,19 +88,37 @@ export function ClassSettings({ cls }: { cls: SchoolClass }) {
           Schülerfotos anzeigen
         </label>
         {cls.halfYearReport && (
-          <RoundingField
-            label="Rundung Halbjahreszeugnis"
-            value={cls.roundingHalf}
-            system={cls.gradeSystem}
-            onSave={(v) => update({ roundingHalf: v })}
-          />
+          <div className="report-settings">
+            <h3>Halbjahreszeugnis</h3>
+            <StepField
+              system={cls.gradeSystem}
+              value={cls.reportStepHalf}
+              onSave={(v) => update({ reportStepHalf: v })}
+            />
+            <RoundingField
+              label="Rundung"
+              value={cls.roundingHalf}
+              system={cls.gradeSystem}
+              step={effectiveStep(cls.gradeSystem, cls.reportStepHalf)}
+              onSave={(v) => update({ roundingHalf: v })}
+            />
+          </div>
         )}
-        <RoundingField
-          label="Rundung Jahreszeugnis"
-          value={cls.roundingFinal}
-          system={cls.gradeSystem}
-          onSave={(v) => update({ roundingFinal: v })}
-        />
+        <div className="report-settings">
+          <h3>Jahreszeugnis</h3>
+          <StepField
+            system={cls.gradeSystem}
+            value={cls.reportStepFinal}
+            onSave={(v) => update({ reportStepFinal: v })}
+          />
+          <RoundingField
+            label="Rundung"
+            value={cls.roundingFinal}
+            system={cls.gradeSystem}
+            step={effectiveStep(cls.gradeSystem, cls.reportStepFinal)}
+            onSave={(v) => update({ roundingFinal: v })}
+          />
+        </div>
       </section>
 
       <section className="panel">
@@ -118,6 +136,29 @@ export function ClassSettings({ cls }: { cls: SchoolClass }) {
         </button>
       </section>
     </div>
+  );
+}
+
+function StepField({
+  system,
+  value,
+  onSave,
+}: {
+  system: GradeSystem;
+  value: ReportStep | undefined;
+  onSave: (v: ReportStep) => void;
+}) {
+  if (system === 'points') return null; // Punkte im Zeugnis immer ganz
+  return (
+    <Field label="Notenstufen">
+      <select value={String(value ?? 1)} onChange={(e) => onSave(Number(e.target.value) as ReportStep)}>
+        {REPORT_STEPS.map((s) => (
+          <option key={s.value} value={String(s.value)}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+    </Field>
   );
 }
 

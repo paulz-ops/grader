@@ -6,6 +6,8 @@ export type SchoolType = 'BS' | 'TG' | 'other';
 export type Half = 1 | 2;
 /** Ansicht: 1. Halbjahr, 2. Halbjahr oder ganzes Schuljahr */
 export type Period = Half | 'year';
+/** Feinheit der Zeugnisnote: ganze, halbe oder Viertel-Noten */
+export type ReportStep = 1 | 0.5 | 0.25;
 
 /** Datumswerte immer als 'YYYY-MM-DD' (lokales Datum). */
 export interface SchoolYear {
@@ -28,6 +30,10 @@ export interface SchoolClass {
   roundingHalf: number;
   /** Rundungsgrenze fürs Jahreszeugnis */
   roundingFinal: number;
+  /** Notenstufe im Halbjahreszeugnis: 1 = ganze, 0.5 = halbe (2-3), 0.25 = mit Tendenz (2+, 2-). Fehlt = 1 */
+  reportStepHalf?: ReportStep;
+  /** Notenstufe im Jahreszeugnis. Fehlt = 1 */
+  reportStepFinal?: ReportStep;
   /** Schülerfotos anzeigen (fehlt bei alten Daten = an) */
   photos?: boolean;
   createdAt: number;

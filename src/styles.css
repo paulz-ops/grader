@@ -752,6 +752,19 @@ table.grades {
 }
 
 /* ---------- Einstellungen ---------- */
+.report-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.8rem;
+}
+
+.report-settings h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .settings {
   max-width: 820px;
 }

@@ -1,4 +1,4 @@
-import type { GradeSystem } from './types';
+import type { GradeSystem, ReportStep } from './types';
 
 export interface GradeSystemInfo {
   label: string;
@@ -115,24 +115,52 @@ export function formatAverage(value: number | null | undefined): string {
   return value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+export const REPORT_STEPS: { value: ReportStep; label: string }[] = [
+  { value: 1, label: 'Ganze Noten (1, 2, 3 …)' },
+  { value: 0.5, label: 'Halbe Noten (2, 2-3, 3 …)' },
+  { value: 0.25, label: 'Mit Tendenz (2+, 2, 2-, 2-3 …)' },
+];
+
+/** Punkte gibt es im Zeugnis nur ganz. */
+export function effectiveStep(system: GradeSystem, step: ReportStep | undefined): ReportStep {
+  return system === 'points' ? 1 : (step ?? 1);
+}
+
 /**
- * Rundet einen Schnitt zur Zeugnisnote.
- * threshold = Nachkommaanteil, ab dem die nächsthöhere Zahl gilt
- * (0,50 = kaufmännisch; 0,51 = 2,50 wird noch zur 2).
+ * Rundet einen Schnitt zur Zeugnisnote in der gewählten Notenstufe.
+ * threshold = Anteil innerhalb einer Stufe, ab dem die nächsthöhere Zahl gilt
+ * (0,50 = kaufmännisch; 0,51 = genau auf der Mitte bleibt die bessere Note).
+ * Beispiel ganze Noten: 2,50 → 3. Halbe Noten: 2,25 → 2-3.
  */
-export function roundReport(avg: number, system: GradeSystem, threshold: number): number {
+export function roundReport(avg: number, system: GradeSystem, threshold: number, step: ReportStep = 1): number {
   const info = GRADE_SYSTEMS[system];
-  const a = Math.round(avg * 1e6) / 1e6; // Gleitkomma-Rauschen entfernen
+  const s = effectiveStep(system, step);
+  const a = Math.round((avg / s) * 1e6) / 1e6; // Gleitkomma-Rauschen entfernen
   const base = Math.floor(a);
   const frac = a - base;
-  const r = frac >= threshold - EPS ? base + 1 : base;
+  const r = Math.round((frac >= threshold - EPS ? base + 1 : base) * s * 100) / 100;
   return Math.min(info.max, Math.max(info.min, r));
 }
 
+/** Zeugnisnote anzeigen: 2, 2-3, 2+, 2- (bei Dezimalnoten als Zahl). */
+export function formatReport(value: number, system: GradeSystem): string {
+  if (system === 'points') return String(Math.round(value));
+  const f = Math.floor(value + EPS);
+  const frac = value - f;
+  if (Math.abs(frac) < EPS) return String(f);
+  if (system === 'tendency') {
+    if (Math.abs(frac - 0.5) < EPS) return `${f}-${f + 1}`;
+    if (Math.abs(frac - 0.25) < EPS) return `${f}-`;
+    if (Math.abs(frac - 0.75) < EPS) return `${f + 1}+`;
+  }
+  return value.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+}
+
 /** Beispieltext für eine Rundungsgrenze, z. B. "2,49 → 2 · 2,50 → 3" */
-export function describeRounding(threshold: number, system: GradeSystem): string {
+export function describeRounding(threshold: number, system: GradeSystem, step: ReportStep = 1): string {
+  const s = effectiveStep(system, step);
   const base = system === 'points' ? 10 : 2;
-  const below = base + threshold - 0.01;
-  const at = base + threshold;
-  return `${formatAverage(below)} → ${base} · ${formatAverage(at)} → ${base + 1}`;
+  const at = Math.round((base + threshold * s) * 100) / 100;
+  const below = at - 0.01;
+  return `${formatAverage(below)} → ${formatReport(base, system)} · ${formatAverage(at)} → ${formatReport(base + s, system)}`;
 }
