@@ -28,6 +28,8 @@ export interface SchoolClass {
   roundingHalf: number;
   /** Rundungsgrenze fürs Jahreszeugnis */
   roundingFinal: number;
+  /** Schülerfotos anzeigen (fehlt bei alten Daten = an) */
+  photos?: boolean;
   createdAt: number;
 }
 
@@ -38,6 +40,8 @@ export interface Student {
   firstName: string;
   /** false = ausgetreten; Noten bleiben erhalten, Schüler wird ausgeblendet */
   active: boolean;
+  /** Foto als JPEG-Data-URL, quadratisch verkleinert (nur mit Einwilligung) */
+  photo?: string;
 }
 
 /** Bereich wie mündlich / schriftlich / Projektkompetenz */
@@ -79,6 +83,8 @@ export interface Grade {
   value: number | null;
   /** entschuldigt gefehlt – zählt nicht in den Schnitt */
   excused?: boolean;
+  /** Freitext-Kommentar, auch ohne Note möglich */
+  comment?: string;
   updatedAt: number;
 }
 

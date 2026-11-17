@@ -10,9 +10,12 @@ describe('parseGrade – Noten mit Tendenz', () => {
     expect(parseGrade('2-', 'tendency')).toEqual(val(2.25));
     expect(parseGrade(' 3 − ', 'tendency')).toEqual(val(3.25));
   });
-  it('akzeptiert Viertelwerte als Zahl', () => {
+  it('akzeptiert Zwischen- und Kommanoten', () => {
     expect(parseGrade('2,25', 'tendency')).toEqual(val(2.25));
-    expect(parseGrade('2,3', 'tendency')).toEqual({ kind: 'invalid' });
+    expect(parseGrade('2,5', 'tendency')).toEqual(val(2.5));
+    expect(parseGrade('2,3', 'tendency')).toEqual(val(2.3));
+    expect(parseGrade('6,5', 'tendency').kind).toBe('invalid');
+    expect(parseGrade('2,345', 'tendency').kind).toBe('invalid');
   });
   it('lehnt 1+, 6- und Werte außerhalb ab', () => {
     expect(parseGrade('1+', 'tendency').kind).toBe('invalid');
@@ -46,6 +49,10 @@ describe('formatGrade', () => {
     expect(formatGrade(1.75, 'tendency')).toBe('2+');
     expect(formatGrade(2.25, 'tendency')).toBe('2-');
     expect(formatGrade(3, 'tendency')).toBe('3');
+  });
+  it('zeigt Kommanoten im Tendenz-System als Dezimalzahl', () => {
+    expect(formatGrade(2.5, 'tendency')).toBe('2,5');
+    expect(formatGrade(2.3, 'tendency')).toBe('2,3');
   });
   it('Dezimal und Punkte', () => {
     expect(formatGrade(2.3, 'decimal')).toBe('2,3');

@@ -7,6 +7,7 @@ import { SCHOOL_TYPES } from '../templates';
 import { parseStudentLines, sortStudents } from '../students';
 import { parseNumber, formatNumber } from '../format';
 import { Field, RoundingField, TextField } from './fields';
+import { PhotoButton } from './photo';
 import type { Assessment, GradeSystem, SchoolClass, SchoolType, Student, Subject } from '../types';
 
 export function ClassSettings({ cls }: { cls: SchoolClass }) {
@@ -78,6 +79,14 @@ export function ClassSettings({ cls }: { cls: SchoolClass }) {
           />
           Klasse bekommt ein Halbjahreszeugnis
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={cls.photos !== false}
+            onChange={(e) => update({ photos: e.target.checked })}
+          />
+          Schülerfotos anzeigen
+        </label>
         {cls.halfYearReport && (
           <RoundingField
             label="Rundung Halbjahreszeugnis"
@@ -115,14 +124,22 @@ export function ClassSettings({ cls }: { cls: SchoolClass }) {
 function StudentsSection({ cls, students }: { cls: SchoolClass; students: Student[] }) {
   const [text, setText] = useState('');
   const parsed = parseStudentLines(text);
+  const showPhotos = cls.photos !== false;
 
   return (
     <section className="panel">
       <h2>Schüler ({students.filter((s) => s.active).length})</h2>
+      {showPhotos && students.length > 0 && (
+        <p className="muted">
+          Foto antippen, um eins aufzunehmen oder auszuwählen. Fotos nur mit Einwilligung. Sie liegen nur auf dem
+          Gerät und im Backup.
+        </p>
+      )}
       {students.length > 0 && (
         <table className="list-table">
           <thead>
             <tr>
+              {showPhotos && <th>Foto</th>}
               <th>Nachname</th>
               <th>Vorname</th>
               <th>Aktiv</th>
@@ -132,6 +149,11 @@ function StudentsSection({ cls, students }: { cls: SchoolClass; students: Studen
           <tbody>
             {students.map((s) => (
               <tr key={s.id} className={s.active ? undefined : 'inactive'}>
+                {showPhotos && (
+                  <td className="photo-cell">
+                    <PhotoButton student={s} size={40} />
+                  </td>
+                )}
                 <td>
                   <TextField
                     ariaLabel="Nachname"

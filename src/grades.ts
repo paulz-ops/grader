@@ -18,7 +18,7 @@ export const GRADE_SYSTEMS: Record<GradeSystem, GradeSystemInfo> = {
     min: 1,
     max: 6,
     higherIsBetter: false,
-    hint: '1 bis 6, mit + oder - (z. B. 2-), e = entschuldigt',
+    hint: '1 bis 6, mit + oder - (z. B. 2-) oder als Kommanote (z. B. 2,5), e = entschuldigt',
     inputMode: 'text',
   },
   decimal: {
@@ -75,13 +75,10 @@ export function parseGrade(input: string, system: GradeSystem): ParsedGrade {
       if (value < 1 || value > 6) return INVALID;
       return { kind: 'value', value };
     }
-    // Auch Viertelwerte direkt erlauben (2,25 = 2-)
-    const n = toNumber(s);
-    if (n !== null && n >= 1 && n <= 6 && isMultiple(n, 0.25)) return { kind: 'value', value: n };
-    return INVALID;
   }
 
-  if (system === 'decimal') {
+  // Kommanoten (auch im Tendenz-System erlaubt, z. B. 2,5 oder 2,3)
+  if (system === 'tendency' || system === 'decimal') {
     const n = toNumber(s);
     if (n !== null && n >= 1 && n <= 6 && isMultiple(n, 0.01)) {
       return { kind: 'value', value: Math.round(n * 100) / 100 };
@@ -105,9 +102,8 @@ export function formatGrade(value: number, system: GradeSystem): string {
     if (Math.abs(d) < EPS) return String(base);
     if (Math.abs(d + 0.25) < EPS) return `${base}+`;
     if (Math.abs(d - 0.25) < EPS) return `${base}-`;
-    return formatAverage(value);
   }
-  if (system === 'decimal') {
+  if (system === 'tendency' || system === 'decimal') {
     return value.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
   }
   return String(Math.round(value));

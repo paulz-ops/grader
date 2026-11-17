@@ -2,6 +2,7 @@ import { db, newId, today } from './db';
 import { gradeKey } from './calc';
 import { SCHOOL_TYPES } from './templates';
 import type { ParsedGrade } from './grades';
+import { applyGradeChange, type GradeChange } from './gradeRecord';
 import type { GradeSystem, Half, SchoolClass, SchoolType, Subject } from './types';
 import type { StudentName } from './students';
 
@@ -26,6 +27,7 @@ export async function createClass(input: NewClassInput): Promise<string> {
     halfYearReport: input.halfYearReport,
     roundingHalf: 0.5,
     roundingFinal: 0.5,
+    photos: true,
     createdAt: Date.now(),
   };
   await db.transaction('rw', db.classes, db.subjects, async () => {
@@ -81,15 +83,25 @@ export async function createAssessment(subject: Subject, categoryId: string, hal
   return id;
 }
 
-export async function setGrade(assessmentId: string, studentId: string, parsed: ParsedGrade): Promise<void> {
+async function updateGrade(assessmentId: string, studentId: string, change: GradeChange): Promise<void> {
   const id = gradeKey(assessmentId, studentId);
-  if (parsed.kind === 'empty') {
-    await db.grades.delete(id);
-  } else if (parsed.kind === 'excused') {
-    await db.grades.put({ id, assessmentId, studentId, value: null, excused: true, updatedAt: Date.now() });
-  } else if (parsed.kind === 'value') {
-    await db.grades.put({ id, assessmentId, studentId, value: parsed.value, updatedAt: Date.now() });
-  }
+  await db.transaction('rw', db.grades, async () => {
+    const next = applyGradeChange(await db.grades.get(id), { id, assessmentId, studentId }, change, Date.now());
+    if (next) await db.grades.put(next);
+    else await db.grades.delete(id);
+  });
+}
+
+export function setGrade(assessmentId: string, studentId: string, parsed: ParsedGrade): Promise<void> {
+  return updateGrade(assessmentId, studentId, { kind: 'grade', parsed });
+}
+
+export function setComment(assessmentId: string, studentId: string, text: string): Promise<void> {
+  return updateGrade(assessmentId, studentId, { kind: 'comment', text });
+}
+
+export async function setPhoto(studentId: string, photo: string | undefined): Promise<void> {
+  await db.students.update(studentId, { photo });
 }
 
 export async function deleteAssessment(id: string): Promise<void> {

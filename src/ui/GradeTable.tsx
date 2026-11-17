@@ -8,6 +8,8 @@ import { sortStudents } from '../students';
 import { formatNumber, formatShortDate } from '../format';
 import { GradeCell, focusCell } from './GradeCell';
 import { AssessmentDialog } from './AssessmentDialog';
+import { CommentDialog } from './CommentDialog';
+import { PhotoButton } from './photo';
 import type { Assessment, Period, SchoolClass, SchoolYear, Subject } from '../types';
 
 interface Props {
@@ -31,6 +33,7 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingFocus, setPendingFocus] = useState<string | null>(null);
+  const [commentFor, setCommentFor] = useState<{ assessmentId: string; studentId: string } | null>(null);
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -79,6 +82,12 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
   };
 
   const editing: Assessment | undefined = data.assessments.find((a) => a.id === editingId);
+  const showPhotos = cls.photos !== false;
+  const comment = commentFor && {
+    assessment: data.assessments.find((a) => a.id === commentFor.assessmentId),
+    student: data.students.find((s) => s.id === commentFor.studentId),
+    grade: gradeMap.get(gradeKey(commentFor.assessmentId, commentFor.studentId)),
+  };
 
   if (students.length === 0) {
     return (
@@ -153,7 +162,12 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
               return (
                 <tr key={s.id}>
                   <th scope="row" className="name-col">
-                    {s.lastName}, {s.firstName}
+                    <div className="name-cell">
+                      {showPhotos && <PhotoButton student={s} size={34} />}
+                      <span className="name-text">
+                        {s.lastName}, {s.firstName}
+                      </span>
+                    </div>
                   </th>
                   {groups.flatMap(({ category, assessments }) => [
                     ...assessments.map((a) => (
@@ -165,6 +179,7 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
                           col={colIndex.get(a.id)!}
                           label={`${a.title}: ${s.firstName} ${s.lastName}`}
                           onCommit={(p) => void setGrade(a.id, s.id, p)}
+                          onComment={() => setCommentFor({ assessmentId: a.id, studentId: s.id })}
                         />
                       </td>
                     )),
@@ -210,9 +225,20 @@ export function GradeTable({ cls, subject, schoolYear, period }: Props) {
         </table>
       </div>
       <p className="legend">
-        Eingabe: {GRADE_SYSTEMS[system].hint}. Enter → nächster Schüler, Tab → nächste Spalte. Spaltenkopf antippen zum
-        Bearbeiten. * = vorläufig, weil ein Bereich noch keine Note hat.
+        Eingabe: {GRADE_SYSTEMS[system].hint}. Enter → nächster Schüler, Tab → nächste Spalte. Kommentar: lange drücken,
+        Rechtsklick oder Strg+K. Spaltenkopf antippen zum Bearbeiten. * = vorläufig, weil ein Bereich noch keine Note
+        hat.
       </p>
+
+      {comment?.assessment && comment.student && (
+        <CommentDialog
+          assessment={comment.assessment}
+          student={comment.student}
+          grade={comment.grade}
+          system={system}
+          onClose={() => setCommentFor(null)}
+        />
+      )}
 
       {editing && (
         <AssessmentDialog
