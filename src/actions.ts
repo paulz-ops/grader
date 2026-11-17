@@ -101,7 +101,8 @@ export function setComment(assessmentId: string, studentId: string, text: string
 }
 
 export async function setPhoto(studentId: string, photo: string | undefined): Promise<void> {
-  await db.students.update(studentId, { photo });
+  // photoRef mit zurücksetzen, sonst käme ein altes Foto per Sync zurück
+  await db.students.update(studentId, { photo, photoRef: undefined });
 }
 
 export async function deleteAssessment(id: string): Promise<void> {

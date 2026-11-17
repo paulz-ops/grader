@@ -120,6 +120,34 @@ h2 {
   font-weight: 600;
 }
 
+.topbar nav {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.sync-badge {
+  font-size: 0.8rem !important;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted) !important;
+  white-space: nowrap;
+}
+
+.sync-badge.ok {
+  color: var(--ok) !important;
+}
+
+.sync-badge.warn,
+.sync-badge.busy {
+  color: var(--muted) !important;
+}
+
+.sync-badge.bad {
+  color: var(--danger) !important;
+}
+
 main {
   padding: 1rem;
 }

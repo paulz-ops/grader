@@ -9,8 +9,15 @@ export type Period = Half | 'year';
 /** Feinheit der Zeugnisnote: ganze, halbe oder Viertel-Noten */
 export type ReportStep = 1 | 0.5 | 0.25;
 
+/** Gemeinsame Felder aller synchronisierten Datensätze */
+export interface Synced {
+  id: string;
+  /** Zeitpunkt der letzten Änderung (ms). Wird automatisch gesetzt, Grundlage für den Sync. */
+  updatedAt?: number;
+}
+
 /** Datumswerte immer als 'YYYY-MM-DD' (lokales Datum). */
-export interface SchoolYear {
+export interface SchoolYear extends Synced {
   id: string;
   name: string; // z. B. "2026/27"
   start: string;
@@ -18,7 +25,7 @@ export interface SchoolYear {
   end: string;
 }
 
-export interface SchoolClass {
+export interface SchoolClass extends Synced {
   id: string;
   schoolYearId: string;
   name: string;
@@ -39,7 +46,7 @@ export interface SchoolClass {
   createdAt: number;
 }
 
-export interface Student {
+export interface Student extends Synced {
   id: string;
   classId: string;
   lastName: string;
@@ -48,6 +55,8 @@ export interface Student {
   active: boolean;
   /** Foto als JPEG-Data-URL, quadratisch verkleinert (nur mit Einwilligung) */
   photo?: string;
+  /** Intern (Sync): Verweis auf ein Foto, das auf diesem Gerät noch fehlt */
+  photoRef?: string;
 }
 
 /** Bereich wie mündlich / schriftlich / Projektkompetenz */
@@ -59,7 +68,7 @@ export interface Category {
 }
 
 /** Ein Fach ergibt eine Zeugnisnote (z. B. "TG Theorie", "TG Labor"). */
-export interface Subject {
+export interface Subject extends Synced {
   id: string;
   classId: string;
   name: string;
@@ -68,7 +77,7 @@ export interface Subject {
 }
 
 /** Eine Leistung = eine Spalte in der Notentabelle (Schulaufgabe, mündliche Note …) */
-export interface Assessment {
+export interface Assessment extends Synced {
   id: string;
   subjectId: string;
   categoryId: string;
@@ -80,7 +89,7 @@ export interface Assessment {
   createdAt: number;
 }
 
-export interface Grade {
+export interface Grade extends Synced {
   /** = `${assessmentId}:${studentId}` */
   id: string;
   assessmentId: string;
@@ -97,4 +106,24 @@ export interface Grade {
 export interface Meta {
   key: string;
   value: string;
+}
+
+export const SYNC_TABLES = ['schoolYears', 'classes', 'students', 'subjects', 'assessments', 'grades'] as const;
+export type SyncTable = (typeof SYNC_TABLES)[number];
+
+/** Löschmarke, damit Löschungen auch auf anderen Geräten ankommen */
+export interface Tombstone {
+  /** = `${table}:${id}` */
+  key: string;
+  table: SyncTable;
+  id: string;
+  deletedAt: number;
+}
+
+/** Gespeicherter Schlüssel für die Sync-Verschlüsselung (nicht auslesbar) */
+export interface SyncKey {
+  id: 'sync';
+  /** Salz der Schlüsselableitung (Base64), muss zur Datei in OneDrive passen */
+  salt: string;
+  key: CryptoKey;
 }

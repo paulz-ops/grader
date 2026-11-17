@@ -1,5 +1,17 @@
 import Dexie, { type Table } from 'dexie';
-import type { Assessment, Grade, Half, Meta, SchoolClass, SchoolYear, Student, Subject } from './types';
+import {
+  SYNC_TABLES,
+  type Assessment,
+  type Grade,
+  type Half,
+  type Meta,
+  type SchoolClass,
+  type SchoolYear,
+  type Student,
+  type Subject,
+  type SyncKey,
+  type Tombstone,
+} from './types';
 
 /**
  * Lokale Datenbank (IndexedDB im Browser).
@@ -14,6 +26,8 @@ export class GraderDB extends Dexie {
   assessments!: Table<Assessment, string>;
   grades!: Table<Grade, string>;
   meta!: Table<Meta, string>;
+  deletions!: Table<Tombstone, string>;
+  keys!: Table<SyncKey, string>;
 
   constructor() {
     super('grader');
@@ -26,10 +40,66 @@ export class GraderDB extends Dexie {
       grades: 'id, assessmentId, studentId',
       meta: 'key',
     });
+    // Version 2: Grundlage für den Sync (Löschmarken, Schlüssel, Änderungszeiten)
+    this.version(2)
+      .stores({ deletions: 'key, deletedAt', keys: 'id' })
+      .upgrade(async (tx) => {
+        const now = Date.now();
+        for (const name of SYNC_TABLES) {
+          await tx
+            .table(name)
+            .toCollection()
+            .modify((r: { updatedAt?: number }) => {
+              if (!r.updatedAt) r.updatedAt = now;
+            });
+        }
+      });
   }
 }
 
 export const db = new GraderDB();
+
+// ---------------------------------------------------------------------------
+// Änderungsverfolgung für den Sync
+// ---------------------------------------------------------------------------
+
+/** Während der Sync fremde Daten einspielt, sollen keine Zeitstempel/Löschmarken entstehen. */
+export const syncFlags = { applyingRemote: false };
+
+const changeListeners = new Set<() => void>();
+
+/** Wird nach jeder lokalen Änderung an synchronisierten Daten aufgerufen. */
+export function onLocalChange(listener: () => void): () => void {
+  changeListeners.add(listener);
+  return () => changeListeners.delete(listener);
+}
+
+function notifyChange(): void {
+  for (const l of changeListeners) l();
+}
+
+for (const name of SYNC_TABLES) {
+  const table = db.table(name);
+  table.hook('creating', function (_key, obj: { updatedAt?: number }) {
+    if (syncFlags.applyingRemote) return;
+    obj.updatedAt = Date.now();
+    this.onsuccess = notifyChange;
+  });
+  table.hook('updating', function () {
+    if (syncFlags.applyingRemote) return undefined;
+    this.onsuccess = notifyChange;
+    return { updatedAt: Date.now() };
+  });
+  table.hook('deleting', function (key, _obj, trans) {
+    if (syncFlags.applyingRemote) return;
+    const id = String(key);
+    const deletedAt = Date.now();
+    // Löschmarke nach erfolgreichem Abschluss schreiben (andere Tabelle als die Transaktion)
+    trans.on('complete', () => {
+      void db.deletions.put({ key: `${name}:${id}`, table: name, id, deletedAt }).then(notifyChange);
+    });
+  });
+}
 
 /** Datenschema-Version für Backups */
 export const SCHEMA_VERSION = 1;

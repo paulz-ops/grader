@@ -4,6 +4,7 @@ import { db } from '../db';
 import { exportBackup, importBackup } from '../backup';
 import { daysSince, formatDate } from '../format';
 import { Field, TextField } from './fields';
+import { SyncPanel } from './SyncPanel';
 import type { SchoolYear } from '../types';
 
 export function AppSettings({ schoolYear }: { schoolYear: SchoolYear }) {
@@ -24,11 +25,14 @@ export function AppSettings({ schoolYear }: { schoolYear: SchoolYear }) {
     <div className="page">
       <h1>Einstellungen &amp; Backup</h1>
 
+      <SyncPanel />
+
       <section className="panel">
         <h2>Backup</h2>
         <p>
-          Alle Daten liegen nur in diesem Browser auf diesem Gerät. Sichere sie regelmäßig als Datei, z. B. in
-          OneDrive oder auf einem USB-Stick. Der automatische Abgleich über OneDrive kommt in Phase 3.
+          Sichere deine Daten zusätzlich zum Sync regelmäßig als Datei, z. B. auf einem USB-Stick. Ein Backup
+          enthält alle Klassen, Noten und Fotos dieses Geräts. Bei aktivem Sync vor dem Wiederherstellen bitte
+          zuerst „Sync trennen“, sonst werden die Daten anschließend wieder mit OneDrive zusammengeführt.
         </p>
         <p className="muted">
           {lastBackup

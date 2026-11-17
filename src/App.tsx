@@ -4,6 +4,7 @@ import { db } from './db';
 import { ClassList } from './ui/ClassList';
 import { ClassView } from './ui/ClassView';
 import { AppSettings } from './ui/AppSettings';
+import { SyncBadge } from './ui/SyncPanel';
 
 /** Einfaches Hash-Routing: #/klasse/<id>/fach/<id> usw. */
 function useHashRoute(): string[] {
@@ -43,6 +44,7 @@ export function App() {
         </a>
         <span className="topbar-year">Schuljahr {schoolYear.name}</span>
         <nav>
+          <SyncBadge />
           <a href="#/einstellungen" className={route[0] === 'einstellungen' ? 'active' : undefined}>
             Einstellungen &amp; Backup
           </a>
