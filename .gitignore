@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.local
+# Backups enthalten Schülerdaten und gehören nie ins Repository
+grader-backup-*.json
