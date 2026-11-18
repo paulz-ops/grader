@@ -4,6 +4,7 @@ import { deleteAssessment } from '../actions';
 import { formatNumber, parseNumber } from '../format';
 import { Field } from './fields';
 import { Modal } from './Modal';
+import { confirmDialog } from './confirm';
 import type { Assessment, Half, SchoolYear, Subject } from '../types';
 
 interface Props {
@@ -31,7 +32,7 @@ export function AssessmentDialog({ assessment, subject, schoolYear, onClose }: P
   const remove = async () => {
     const count = await db.grades.where('assessmentId').equals(assessment.id).count();
     const msg = `„${assessment.title}“ löschen?${count ? ` Dabei werden ${count} eingetragene Noten gelöscht.` : ''}`;
-    if (!window.confirm(msg)) return;
+    if (!(await confirmDialog(msg, { confirmLabel: 'Löschen', danger: true }))) return;
     await deleteAssessment(assessment.id);
     onClose();
   };

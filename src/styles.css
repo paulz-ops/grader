@@ -205,6 +205,23 @@ button.danger {
   background: transparent;
 }
 
+button.danger-solid {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.danger-solid:hover:not(:disabled) {
+  background: var(--danger);
+  filter: brightness(1.08);
+}
+
+.confirm-text {
+  margin-top: 0;
+  white-space: pre-line;
+}
+
 button.small {
   min-height: 32px;
   padding: 0.2rem 0.6rem;

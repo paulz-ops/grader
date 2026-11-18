@@ -4,6 +4,7 @@ import { App } from './App';
 import { ensureSchoolYear } from './db';
 import { initAuth } from './sync/onedrive';
 import { startSync } from './sync/engine';
+import { startAutoBackup } from './autobackup';
 import './styles.css';
 
 // Bittet den Browser, die Daten nicht automatisch zu löschen, wenn der Speicher knapp wird.
@@ -23,6 +24,7 @@ async function boot(): Promise<void> {
     </React.StrictMode>,
   );
   void startSync();
+  void startAutoBackup();
 }
 
 void boot();

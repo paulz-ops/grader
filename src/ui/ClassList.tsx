@@ -6,6 +6,7 @@ import { GRADE_SYSTEMS } from '../grades';
 import { SCHOOL_TYPES } from '../templates';
 import { daysSince } from '../format';
 import { Field } from './fields';
+import { AutoBackupNotice } from './AutoBackupPanel';
 import type { GradeSystem, SchoolType, SchoolYear } from '../types';
 
 export function ClassList({ schoolYear }: { schoolYear: SchoolYear }) {
@@ -32,6 +33,8 @@ export function ClassList({ schoolYear }: { schoolYear: SchoolYear }) {
   return (
     <div className="page">
       <h1>Meine Klassen</h1>
+
+      <AutoBackupNotice />
 
       {needsBackup && (
         <div className="notice">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { disableSync, enableSync, remoteExists, signIn, syncNow, unlock, useSyncStatus, type SyncStatus } from '../sync/engine';
 import { WrongPassphraseError } from '../sync/crypto';
 import { Field } from './fields';
+import { confirmDialog } from './confirm';
 
 function formatTime(ts: number | null): string {
   if (!ts) return 'noch nie';
@@ -34,6 +35,7 @@ export function SyncBadge() {
 
 export function SyncPanel() {
   const s = useSyncStatus();
+  if (s.state === 'unconfigured') return null; // Sync derzeit ausgeschaltet
   return (
     <section className="panel">
       <h2>Sync über OneDrive</h2>
@@ -103,10 +105,11 @@ function SyncBody({ status: s }: { status: SyncStatus }) {
             </button>
             <button
               disabled={busy}
-              onClick={() => {
-                if (window.confirm('Sync auf diesem Gerät trennen? Deine Daten bleiben hier und in OneDrive erhalten.')) {
-                  void run(disableSync);
-                }
+              onClick={async () => {
+                const ok = await confirmDialog('Sync auf diesem Gerät trennen? Deine Daten bleiben hier und in OneDrive erhalten.', {
+                  confirmLabel: 'Sync trennen',
+                });
+                if (ok) void run(disableSync);
               }}
             >
               Sync trennen

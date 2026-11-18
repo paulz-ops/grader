@@ -28,6 +28,7 @@ export class GraderDB extends Dexie {
   meta!: Table<Meta, string>;
   deletions!: Table<Tombstone, string>;
   keys!: Table<SyncKey, string>;
+  handles!: Table<{ id: string; handle: FileSystemDirectoryHandle }, string>;
 
   constructor() {
     super('grader');
@@ -54,6 +55,8 @@ export class GraderDB extends Dexie {
             });
         }
       });
+    // Version 3: gemerkter Ordner für das automatische Backup
+    this.version(3).stores({ handles: 'id' });
   }
 }
 

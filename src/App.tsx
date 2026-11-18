@@ -5,6 +5,7 @@ import { ClassList } from './ui/ClassList';
 import { ClassView } from './ui/ClassView';
 import { AppSettings } from './ui/AppSettings';
 import { SyncBadge } from './ui/SyncPanel';
+import { ConfirmHost } from './ui/confirm';
 
 /** Einfaches Hash-Routing: #/klasse/<id>/fach/<id> usw. */
 function useHashRoute(): string[] {
@@ -51,6 +52,7 @@ export function App() {
         </nav>
       </header>
       <main>{page}</main>
+      <ConfirmHost />
     </>
   );
 }

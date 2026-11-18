@@ -8,6 +8,7 @@ import { parseStudentLines, sortStudents } from '../students';
 import { parseNumber, formatNumber } from '../format';
 import { Field, RoundingField, TextField } from './fields';
 import { PhotoButton } from './photo';
+import { confirmDialog } from './confirm';
 import type { Assessment, GradeSystem, ReportStep, SchoolClass, SchoolType, Student, Subject } from '../types';
 
 export function ClassSettings({ cls }: { cls: SchoolClass }) {
@@ -127,7 +128,11 @@ export function ClassSettings({ cls }: { cls: SchoolClass }) {
         <button
           className="danger"
           onClick={async () => {
-            if (!window.confirm(`Klasse „${cls.name}“ mit allen Noten endgültig löschen?`)) return;
+            const ok = await confirmDialog(`Klasse „${cls.name}“ mit allen Schülern, Fächern und Noten endgültig löschen?`, {
+              confirmLabel: 'Klasse löschen',
+              danger: true,
+            });
+            if (!ok) return;
             await deleteClass(cls.id);
             window.location.hash = '#/';
           }}
@@ -226,7 +231,7 @@ function StudentsSection({ cls, students }: { cls: SchoolClass; students: Studen
                     onClick={async () => {
                       const n = await db.grades.where('studentId').equals(s.id).count();
                       const msg = `${s.firstName} ${s.lastName} löschen?${n ? ` Dabei werden ${n} Noten gelöscht. Tipp: Bei Austritt lieber „Aktiv“ abwählen, dann bleiben die Noten erhalten.` : ''}`;
-                      if (window.confirm(msg)) await deleteStudent(s.id);
+                      if (await confirmDialog(msg, { confirmLabel: 'Löschen', danger: true })) await deleteStudent(s.id);
                     }}
                   >
                     ✕
@@ -277,7 +282,7 @@ function SubjectEditor({ subject, assessments }: { subject: Subject; assessments
           className="danger small"
           onClick={async () => {
             const msg = `Fach „${subject.name}“ löschen?${assessments.length ? ` Dabei werden ${assessments.length} Leistungen mit allen Noten gelöscht.` : ''}`;
-            if (window.confirm(msg)) await deleteSubject(subject.id);
+            if (await confirmDialog(msg, { confirmLabel: 'Fach löschen', danger: true })) await deleteSubject(subject.id);
           }}
         >
           Fach löschen

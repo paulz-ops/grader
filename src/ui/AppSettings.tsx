@@ -5,6 +5,8 @@ import { exportBackup, importBackup } from '../backup';
 import { daysSince, formatDate } from '../format';
 import { Field, TextField } from './fields';
 import { SyncPanel } from './SyncPanel';
+import { AutoBackupPanel } from './AutoBackupPanel';
+import { confirmDialog } from './confirm';
 import type { SchoolYear } from '../types';
 
 export function AppSettings({ schoolYear }: { schoolYear: SchoolYear }) {
@@ -26,13 +28,15 @@ export function AppSettings({ schoolYear }: { schoolYear: SchoolYear }) {
       <h1>Einstellungen &amp; Backup</h1>
 
       <SyncPanel />
+      <AutoBackupPanel />
 
       <section className="panel">
-        <h2>Backup</h2>
+        <h2>Backup von Hand</h2>
         <p>
-          Sichere deine Daten zusätzlich zum Sync regelmäßig als Datei, z. B. auf einem USB-Stick. Ein Backup
-          enthält alle Klassen, Noten und Fotos dieses Geräts. Bei aktivem Sync vor dem Wiederherstellen bitte
-          zuerst „Sync trennen“, sonst werden die Daten anschließend wieder mit OneDrive zusammengeführt.
+          Deine Daten liegen nur in diesem Browser auf diesem Gerät. Geht das Gerät kaputt oder werden die
+          Browserdaten gelöscht, sind sie weg – sichere sie deshalb regelmäßig als Datei, am besten in deinen
+          OneDrive-Ordner und zusätzlich auf einen USB-Stick. Ein Backup enthält alle Klassen, Noten, Kommentare
+          und Fotos.
         </p>
         <p className="muted">
           {lastBackup
@@ -64,7 +68,11 @@ export function AppSettings({ schoolYear }: { schoolYear: SchoolYear }) {
                 const file = e.target.files?.[0];
                 e.target.value = '';
                 if (!file) return;
-                if (!window.confirm('Alle aktuellen Daten werden durch das Backup ersetzt. Fortfahren?')) return;
+                const ok = await confirmDialog('Alle aktuellen Daten werden durch das Backup ersetzt. Fortfahren?', {
+                  confirmLabel: 'Wiederherstellen',
+                  danger: true,
+                });
+                if (!ok) return;
                 try {
                   const data = await importBackup(file);
                   setMessage({

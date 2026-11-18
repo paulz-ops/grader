@@ -10,13 +10,21 @@ export interface BackupFile {
   tables: Record<TableName, unknown[]>;
 }
 
-/** Lädt alle Daten als JSON-Datei herunter (offenes Format, jederzeit lesbar). */
-export async function exportBackup(): Promise<void> {
+/** Alle Daten als Backup-Objekt (offenes JSON-Format, jederzeit lesbar). */
+export async function buildBackup(): Promise<BackupFile> {
   const tables = {} as Record<TableName, unknown[]>;
   for (const name of TABLES) tables[name] = await db.table(name).toArray();
-  const data: BackupFile = { app: 'grader', schemaVersion: SCHEMA_VERSION, exportedAt: new Date().toISOString(), tables };
+  return { app: 'grader', schemaVersion: SCHEMA_VERSION, exportedAt: new Date().toISOString(), tables };
+}
 
-  const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+export function serializeBackup(data: BackupFile): string {
+  return JSON.stringify(data, null, 1);
+}
+
+/** Lädt alle Daten als JSON-Datei herunter. */
+export async function exportBackup(): Promise<void> {
+  const data = await buildBackup();
+  const blob = new Blob([serializeBackup(data)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

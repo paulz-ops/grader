@@ -35,6 +35,11 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    // Auf diesem Rechner verpasst die normale Dateiüberwachung manchmal schnelle
+    // Änderungen. Regelmäßiges Nachsehen ist zuverlässiger (nur in der Entwicklung).
+    watch: { usePolling: true, interval: 300 },
+  },
   test: {
     environment: 'node',
   },
